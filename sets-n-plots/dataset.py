@@ -67,8 +67,8 @@ class BaseTableInDataSet(IncomingDataSet):
 
         try:
             self.__table = Table(
-                "table_content" = {
-                    "fields" : kwargs["dataset"]["fields"},
+                table_content = {
+                    "fields" : kwargs["dataset"]["fields"],
                     "data" : kwargs["dataset"]["data"]
                     }
                 )
@@ -87,13 +87,14 @@ class BaseTableOutClass(OutgoingDataSet):
 
         try:
             self.__output_table = Table(
-                "table_content" = {
-                    "fields" = kwargs["dataset"]["fields"],
-                    "data" = kwargs["dataset"]["data"]
+                table_content = {
+                    "fields" : kwargs["dataset"]["fields"],
+                    "data" : kwargs["dataset"]["data"]
                 }
             )
         except: pass
         
+    def setOutputTable(self, t): self.__output_table = t
     
     def getOutputTable(self): return self.__output_table
 # end class BaseTableOutClass

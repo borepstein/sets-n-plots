@@ -4,7 +4,7 @@ Variable length table handling logic.
 
 # begin Table
 class Table():
-    ###
+    '''
     Table data format:
     {"fields": [field1, field2, field3],
      "data" : [v11, v12, v13,
@@ -17,7 +17,7 @@ class Table():
               "Jane", "Smith", "1990/10/09"
      ]
     }
-    ###
+    '''
     
     def __init__(self, **kwargs):
         self.__table_content = None
@@ -81,7 +81,7 @@ class Table():
         try:
             pos = self.getColNumByFieldName( field_name )
             num_fields = len( self.__table_content["fields"] )
-            cell = self.__table_content["data"].[row * num_fields + pos]
+            cell = self.__table_content["data"][row * num_fields + pos]
         except:
             pass
         

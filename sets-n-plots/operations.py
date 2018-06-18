@@ -1,10 +1,10 @@
-"""
+'''
 Operations-related classes.
-"""
+'''
 
 import table
 import dataset
-import numpy
+import numpy as np
 
 # begin class Operation()
 class Operation():
@@ -44,6 +44,16 @@ class BaseSingleColumnSummaryAnalysis(Operation):
         
     def process(self):
         if self.__op_desc["op_type"] != "single_column_summary": return
+        in_t = self._in_data.getDataTable()
+        col = in_t.getColumn()
+        out_t = Table({"fields" : ["min", "5th perc", "median",
+                                   "95th perc", "max"],
+                       "data" : [np.min(col), np.percentile(col, 5),
+                                 np.percentile(col, 50), np.percentile(col, 95),
+                                 np.max(col) ] })
+        
+        self.__out_data.setOutputData(out_t)
 
+    def getOutDataset(self): return self.__out_data
         
 # end class BaseSingleColumnSummaryAnalysis(Operation)
