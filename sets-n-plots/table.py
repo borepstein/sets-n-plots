@@ -2,8 +2,10 @@
 Variable length table handling logic.
 """
 
+import hash_based
+
 # begin Table
-class Table():
+class Table(hash_based.HashBased):
     '''
     Table data format:
     {"fields": [field1, field2, field3],
@@ -20,6 +22,7 @@ class Table():
     '''
     
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.__table_content = None
         
         if kwargs is None: return
@@ -41,7 +44,7 @@ class Table():
         col = None
 
         try:
-            col = self.__table_content["fields"].index( field )
+            col = self.__fields.index( field )
         except:
             pass
 
@@ -54,7 +57,7 @@ class Table():
         try:
             for i in range(row_num * num_fields,
                            row_num * (num_fields + 1) -1 ):
-                row.append( self.__table_content["data"][i]  )
+                row.append( self.__data[i]  )
         except:
             return []
         
@@ -65,12 +68,12 @@ class Table():
 
         try:
             pos = self.getColNumByFieldName( field_name )
-            num_fields = len( self.__table_content["fields"] )
+            num_fields = len( self.__fields )
         except:
             return col
         
-        while pos <= len( self.__table_content["data"] ):            
-            col.append( self.__table_content["data"][pos] )
+        while pos <= len( self.__data ):            
+            col.append( self.__data[pos] )
             pos += num_fields
 
         return col
@@ -80,12 +83,11 @@ class Table():
 
         try:
             pos = self.getColNumByFieldName( field_name )
-            num_fields = len( self.__table_content["fields"] )
-            cell = self.__table_content["data"][row * num_fields + pos]
+            num_fields = len( self.__fields )
+            cell = self.__data[row * num_fields + pos]
         except:
             pass
         
         return cell
     
 # end Table
-

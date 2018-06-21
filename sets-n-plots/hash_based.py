@@ -12,4 +12,11 @@ class HashBased():
         self.recalculate()
 
     def getHash(self): return self.__hash
+
+    '''
+    Implement in subclasses to recalculate parameters dependent
+    upon the hash.
+    '''
+    def recalculate(self):
+        pass
 #end class HashBased()

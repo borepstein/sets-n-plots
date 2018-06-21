@@ -2,13 +2,25 @@
 Operations-related classes.
 '''
 
-import table
-import dataset
+from hash_based import *
+from table import *
+from dataset import *
 import numpy as np
 
 # begin class Operation()
-class Operation():
+class Operation(HashBased):
+    '''
+    Minimal parameters:
+    op_desc : Operation description
+    structure describing operation requested.
+
+    in_dataset : incoming dataset
+
+    out_dataset : outgoing (resultant) dataset
+    '''
+    
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.__op_desc = None
         self.__in_dataset = None
         self.__out_dataset = None
@@ -21,39 +33,58 @@ class Operation():
             self.__in_dataset = kwargs["in_dataset"]
         except: pass
 
+        try:
+            self.__out_dataset = kwargs["out_dataset"]
+        except: pass
+
     def process(self):
         """
         Override with the actual processing logic.
         """
         pass
 
-    def getInDataset(self): return self.__in_dataset
+    def getInDataSet(self): return self.__in_dataset
 
-    def getOutDataset(self): return self.__out_dataset
+    def getOutDataSet(self): return self.__out_dataset
 
-    def getOpDess(self): return self.__op_desc
+    def getOpDesc(self): return self.__op_desc
 # end class Operation()
 
 # begin class BaseSingleColumnSummaryAnalysis(Operation)
 class BaseSingleColumnSummaryAnalysis(Operation):
+    '''
+    Format:
+    op_desc : op_type = "single_column_summary"
+    op_desc : field = <field name>
+    in_dataset : incoming dataset
+    out_dataset : outgoing dataset
+    '''
+    
     def __init__(self, **kwargs):
-        super.__init__(**kwargs)
-        self.__op_desc = super().getOpDesc()
-        self.__in_data = super().getInDataset()
-        self.__out_data = super().getOutDataset()
+        super().__init__(**kwargs)
         
     def process(self):
-        if self.__op_desc["op_type"] != "single_column_summary": return
-        in_t = self._in_data.getDataTable()
-        col = in_t.getColumn()
-        out_t = Table({"fields" : ["min", "5th perc", "median",
-                                   "95th perc", "max"],
-                       "data" : [np.min(col), np.percentile(col, 5),
-                                 np.percentile(col, 50), np.percentile(col, 95),
-                                 np.max(col) ] })
-        
-        self.__out_data.setOutputData(out_t)
+        if self.getOpDesc()["op_type"] != "single_column_summary": return
 
-    def getOutDataset(self): return self.__out_data
+        try:
+            in_t = self.getInDataSet().getDataTable()
+            col = in_t.getColumn(self.__op_desc["field"])
+            out_t = Table({"fields" : ["min", "5th perc", "median",
+                                       "95th perc", "max"],
+                           "data" : [np.min(col), np.percentile(col, 5),
+                                     np.percentile(col, 50),
+                                     np.percentile(col, 95),
+                                     np.max(col) ] })
+
+            if self.getOutDataSet() is None:
+                out_data = BaseTableOutDataSet(status_rec =
+                                               "column processed")
+                gen_hash = self.getHash()
+                gen_hash["out_dataset"] = out_data
+                self.setHash( gen_hash )
+        
+            self.getOutDataSet().setOutputTable(out_t)
+        except:
+            self.getOutDataSet().setOutputTable(None)
         
 # end class BaseSingleColumnSummaryAnalysis(Operation)
