@@ -68,22 +68,21 @@ class BaseSingleColumnSummaryAnalysis(Operation):
 
         try:
             in_t = self.getInDataSet().getDataTable()
-            col = in_t.getColumn(self.__op_desc["field"])
-            out_t = Table({"fields" : ["min", "5th perc", "median",
-                                       "95th perc", "max"],
-                           "data" : [np.min(col), np.percentile(col, 5),
-                                     np.percentile(col, 50),
-                                     np.percentile(col, 95),
-                                     np.max(col) ] })
+            col = in_t.getColumn(self.getOpDesc()["op_desc"]["field"])
+            out_t = Table(fields = ["min", "5th perc", "median",
+                                    "95th perc", "max"],
+                          data = [np.min(col), np.percentile(col, 5),
+                                  np.percentile(col, 50),
+                                  np.percentile(col, 95),
+                                  np.max(col) ] )
 
             if self.getOutDataSet() is None:
-                out_data = BaseTableOutDataSet(status_rec =
-                                               "column processed")
-                gen_hash = self.getHash()
-                gen_hash["out_dataset"] = out_data
-                self.setHash( gen_hash )
-        
-            self.getOutDataSet().setOutputTable(out_t)
+                self.setOutDataSet(
+                    BaseTableOutDataSet(status_rec =
+                                        "column processed")
+                )
+
+            self.getOutDataSet().setOutputTable( out_t )
         except:
             self.getOutDataSet().setOutputTable(None)
         

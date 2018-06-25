@@ -2,10 +2,10 @@
 Variable length table handling logic.
 """
 
-import hash_based
+from hash_based import *
 
 # begin Table
-class Table(hash_based.HashBased):
+class Table(HashBased):
     '''
     Table data format:
     {"fields": [field1, field2, field3],
@@ -23,20 +23,20 @@ class Table(hash_based.HashBased):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.__table_content = None
+        self.__fields = None
+        self.__data = None
         
         if kwargs is None: return
 
-        for key in kwargs.keys():
-            if key == "table_content":
-                self.__table_content = kwargs[key]
-                continue
-            if key == "fields":
-                self.__fields = kwargs[key]
-                continue
-            
+        try:
+            self.__fields = kwargs["fields"]
+        except: pass
 
-    def getTableContent(self): return self.__table_content
+        try:
+            self.__data = kwargs["data"]
+        except: pass
+
+    def getData(self): return self.__data
 
     def getFieldNames(self): return self.__table_content["fields"]
 

@@ -90,10 +90,8 @@ class BaseTableInDataSet(IncomingDataSet):
 
         try:
             self.__table = Table(
-                table_content = {
-                    "fields" : kwargs["dataset"]["fields"],
-                    "data" : kwargs["dataset"]["data"]
-                    }
+                    fields = kwargs["dataset"]["fields"],
+                    data = kwargs["dataset"]["data"]
                 )
         except:
             self.__table = None
@@ -122,7 +120,7 @@ class BaseTableOutDataSet(OutgoingDataSet):
     def setOutputTable(self, t):
         self.__output_table = t
         gen_hash = self.getHash()
-        gen_hash["table"] = None
+        gen_hash["table"] = t
         self.setHash( **gen_hash )
         
     def getOutputTable(self): return self.__output_table
