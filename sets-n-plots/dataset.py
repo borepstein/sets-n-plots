@@ -4,6 +4,7 @@ Class collection for data set (incoming and outgoing)
 
 from hash_based import *
 from table import *
+from exceptions import *
 
 # begin class DataSet
 class DataSet(HashBased):
@@ -125,3 +126,39 @@ class BaseTableOutDataSet(OutgoingDataSet):
         
     def getOutputTable(self): return self.__output_table
 # end class BaseTableOutDataSet
+
+# begin class DiscreteDistroInDataSet(IncomingDataSet)
+class DiscreteDistroInDataSet(IncomingDataSet):
+    '''
+    Minimal structure:
+    dataset = { data = [ val1, val2. val3, ...],
+    dataset_type = <dataset_type> }
+    '''
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def getData(self): return self.getHash()["dataset"]["data"]
+    
+# begin class DiscreteDistroInDataSet(IncomingDataSet)
+
+# begin class DiscreteDistroOutDataSet(OutgoingDataSet)
+class DiscreteDistroOutDataSet(OutgoingDataSet):
+    '''
+    Minimal structure:
+    dataset=<dataset>
+    dataset_type=<dataset_type>
+    status_rec=<status_rec>
+    '''
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def setDataSet(self, ds):
+        hash = self.getHash()
+        hash["dataset"] = ds
+        self.setHash( hash )
+
+    def getDataSet(self): return self.getHash()["dataset"]
+    
+# begin class DiscreteDistroOutDataSet(OutgoingDataSet)

@@ -2,10 +2,12 @@
 Operations-related classes.
 '''
 
+import numpy as np
 from hash_based import *
 from table import *
 from dataset import *
-import numpy as np
+from graphical_utils import *
+from exceptions import *
 
 # begin class Operation()
 class Operation(HashBased):
@@ -48,6 +50,13 @@ class Operation(HashBased):
     def getOutDataSet(self): return self.__out_dataset
 
     def getOpDesc(self): return self.__op_desc
+
+    def report(self):
+        '''
+        Report on the operation status/completion status.
+        Implement in subclasses.
+        '''
+        pass
 # end class Operation()
 
 # begin class BaseSingleColumnSummaryAnalysis(Operation)
@@ -87,3 +96,59 @@ class BaseSingleColumnSummaryAnalysis(Operation):
             self.getOutDataSet().setOutputTable(None)
         
 # end class BaseSingleColumnSummaryAnalysis(Operation)
+
+# begin class DiscreteDistroBaseProc(Operation)
+class DiscreteDistroBaseProc(Operation):
+    '''
+    Minimal structure:
+    op_desc : Operation description
+    op_desc : op_type : "disc_distro_base_analysis"
+    op_desc : output_type : "file_system"
+    op_desc : output_directory : <directory>
+    op_desc : hist_file : <histogram file>
+    in_dataset: <dataset>
+    out_dataset: <dataset>
+    '''
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def getOutputDir(self): return self.getHash()["op_desc"]["output_directory"]
+
+    def process(self):
+        output_data = {}
+        output_data["count"] = 0
+        output_data["min"] = None
+        output_data["max"] = None
+        output_data["median"] = None
+        output_data["stdev"] = None
+        output_data["variance"] = None
+        output_data["hist_file_dir"] = None
+        data_set = self.getInDataSet().getData()
+        output_data["ssize"] = len( data_set )
+
+        # Submitting blank data in a dataset as it is empty.
+        if output_data["ssize"] == 0:
+            self.getOutDataSet().setDataSet(output_data)
+            return
+
+        # Filling in the data.
+        output_data["min"] = np.min( data_set )
+        output_data["max"] = np.max( data_set )
+        output_data["median"] = np.median( data_set )
+        output_data["stdev"] = np.std( data_set )
+        output_data["variance"] = np.var( data_set )
+        output_data["hist_file_dir"] = self.getOpDesc()["output_directory"]
+        output_data["hist_file"] = self.getOpDesc()["hist_file"]
+
+        gr = DiscreteSetBaseGraph(
+            in_data = {"data_set" : data_set,
+                       "hist_file_dir" : output_data["hist_file_dir"],
+                        "hist_file_name" : output_data["hist_file"]})
+
+        gr.process()
+        
+        self.getOutDataSet().setDataSet(output_data)
+        
+
+# end class DiscreteDistroBaseProc(Operation)
