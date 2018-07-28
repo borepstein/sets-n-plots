@@ -5,6 +5,7 @@ Functions such as utilities, set calculations, etc.
 
 import numpy as np
 from hash_based import *
+from exceptions import *
 
 # begin Set(HashBased)
 '''
@@ -12,6 +13,29 @@ Minimal configuration:
 Set(content=[<elem1>, <elem2>, <elem3>, ...])
 '''
 class Set(HashBased):
+    def __init__(self, **kwargs):
+        self.__hash = kwargs
+        self.__content = {}
+        self.__belongs_to_func = self.belongsToFunc
+        self.__is_subset_func = self.isSubsetFunc
+
+        try: self.__content = kwargs['content']
+        except: pass
+
+        self.__hash['content'] = self.__content
+
+        try: self.__belongs_to_func = kwargs['belongs_to_func']
+        except: pass
+
+        self.__hash['belongs_to_func'] = self.__belongs_to_func
+
+        try: self.__is_subset_func = kwargs['is_subset_func']
+        except: pass
+
+        self.__hash['is_subset_func'] = self.__is_subset_func
+
+        HashBased.__init__(self, **self.__hash)
+        
     def getContent(self):
         cont = {}
 
@@ -21,17 +45,24 @@ class Set(HashBased):
 
         return cont
 
-    '''
-    Implement in subclass
-    '''
-    def belongsTo(self, elem):
-        return True
+    def belongsTo(self, elem, **kwargs):
+        return self.__belongs_to_func(elem, **kwargs)
 
     '''
-    Implement in subclass.
+    Implement in subclass or pass via 'belongs_to_func'.
     '''
-    def isSubset(self, set):
-        return True
+    def belongsToFunc(self, elem, **kwargs):
+        pass
+    
+    def isSubset(self, set, **kwargs):
+        return self.__is_subset_func(set, **kwargs)
+
+    '''
+    Implement in subclass or pass via 'is_subset_func'.
+    '''
+    def isSubsetFunc(self, set, **kwargs):
+        pass
+    
 # end Set(HashBased)
 
 # begin FiniteSet(Set):
@@ -40,14 +71,31 @@ Minimal configuration:
 Set(content=[<elem1>, <elem2>, <elem3>, ...])
 '''
 class FiniteSet(Set):
-    def belongsTo(self, elem):
+    def __init__(self, **kwargs):
+        cont = []
+        
+        try: cont = kwargs['content']
+        except: pass
+
+        if len( cont ) != len( set(cont) ):
+            raise FiniteSetDuplicateValueException(message=\
+                                                   "FiniteSet: " + self.__str__() + \
+                                                   " : non-unique elements.")
+        
+        self.__hash = kwargs
+        self.__hash['content'] = cont
+        self.__hash['belongs_to_func'] = self.belongsToFunc
+        self.__hash['is_subset_func'] = self.isSubsetFunc
+        Set.__init__(self, **self.__hash)
+        
+    def belongsToFunc(self, elem, **kwargs):
         try:
             self.getContent().index(elem)
             return True
         except:
             return False
 
-    def isSubset(self, set):
+    def isSubsetFunc(self, set, **kwargs):
         try:
             for elem in set.getContent():
                 if not self.belongsTo(elem): return False
@@ -66,7 +114,15 @@ Example: Set(content={lower_limit:12, incude_lower_limit:True,
 upper_limit:25, include_upper_limit:False})
 '''
 class NumericalSet(Set):
-    def belongsTo(self, elem):
+    def __init__(self, **kwargs):
+        self.__hash = kwargs
+        self.__belongs_to_func = self.belongsToFunc
+        self.__hash['belongs_to_func'] = self.__belongs_to_func
+        self.__is_subset_func = self.isSubsetFunc
+        self.__hash['is_subset_func'] = self.__is_subset_func
+        Set.__init__(self, **self.__hash)
+        
+    def belongsToFunc(self, elem, **kwargs):
         try:
             cont = self.getContent()
             
@@ -83,7 +139,7 @@ class NumericalSet(Set):
             return True
         except: return False
 
-    def isSubset(self, set):
+    def isSubsetFunc(self, set, **kwargs):
         try:
             cont1 = self.getContent()
             cont2 = set.getContent()
@@ -103,6 +159,30 @@ class NumericalSet(Set):
             return True
         except: return False
 # begin NumericalSet(Set)
+
+# begin NumericalFiniteMultiSet(Set)
+'''
+Minimal structure: NumericalFiniteMultiSet(content=[<n1>, <n2>, <n3>, ...])
+'''
+class NumericalFiniteMultiSet(Set):
+    def __init__(self, **kwargs):
+        self.__hash = kwargs
+        self.__hash['belongs_to_func'] = self.belongsToFunc
+        self.__hash['is_subset_func'] = self.isSubsetFunc
+        Set.__init__(self, **self.__hash)
+
+    def belongsToFunc(self, elem, **kwargs):
+        for e in self.getContent():
+            if e == elem: return True
+        return False
+
+    def isSubsetFunc(self, a_set, **kwargs):
+        for e in set( a_set.getContent() ):
+            if not self.belongsTo( e ): return False
+        return True
+    
+# end NumericalFiniteMultiSet(Set):
+
 
 
 
