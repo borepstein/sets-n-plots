@@ -3,48 +3,45 @@ Variable length table handling logic.
 """
 
 from hash_based import *
+from generic_utilities import *
 
 # begin Table
-class Table(HashBased):
-    '''
-    Table data format:
-    {"fields": [field1, field2, field3],
-     "data" : [v11, v12, v13,
-               v21, v22, v23]
-    }
+'''
+Table data format:
+{"fields": [field1, field2, field3],
+"data" : [v11, v12, v13,
+v21, v22, v23]
+}
 
-    Example:
-    {"fields" : ["first_name", "last_name", "DOB"],
-     "data": ["Bob", "Jones", "1950/01/05",
-              "Jane", "Smith", "1990/10/09"
-     ]
-    }
-    '''
+Example:
+{"fields" : ["first_name", "last_name", "DOB"],
+"data": ["Bob", "Jones", "1950/01/05",
+"Jane", "Smith", "1990/10/09"
+]
+}
+'''
+class Table(HashBased):
     
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.__fields = None
-        self.__data = None
-        
-        if kwargs is None: return
+        hash = kwargs 
 
-        try:
-            self.__fields = kwargs["fields"]
-        except: pass
+        try: hash['fields']
+        except: hash['fields'] = []
 
-        try:
-            self.__data = kwargs["data"]
-        except: pass
+        try: hash['data']
+        except: hash['data'] = []
 
-    def getData(self): return self.__data
+        HashBased.__init__(self, **hash)
 
-    def getFieldNames(self): return self.__table_content["fields"]
+    def getData(self): return self.getHash()['data']
+
+    def getFieldNames(self): return self.getHash()['fields']
 
     def getColNumByFieldName(self, field):
         col = None
 
         try:
-            col = self.__fields.index( field )
+            col = self.getFieldNames().index( field )
         except:
             pass
 
@@ -52,28 +49,35 @@ class Table(HashBased):
 
     def getRow(self, row_num):
         row = []
-        num_fields = len(self.__table_content["fields"])
+        num_fields = len(self.getHash()['fields'])
 
-        try:
-            for i in range(row_num * num_fields,
-                           row_num * (num_fields + 1) -1 ):
-                row.append( self.__data[i]  )
-        except:
-            return []
+        try: row = self.getHash()['data'][ num_fields * row_num : \
+                                           num_fields*(row_num + 1) ]
+        except: pass
         
         return row
+
+    def getRowCount(self):
+        cnt = 0
+
+        try: cnt = int( len(self.getHash()['data'])/\
+                        len(self.getHash()['fields']) )
+        except: pass
+
+        return cnt
 
     def getColumn(self, field_name):
         col = []
 
         try:
             pos = self.getColNumByFieldName( field_name )
-            num_fields = len( self.__fields )
+            if pos is None: return col
+            num_fields = len( self.getHash()['fields'] )
         except:
             return col
-        
-        while pos <= len( self.__data ):            
-            col.append( self.__data[pos] )
+
+        while pos <= len( self.getHash()['data'] ):            
+            col.append( self.getHash()['data'][pos] )
             pos += num_fields
 
         return col
@@ -83,11 +87,36 @@ class Table(HashBased):
 
         try:
             pos = self.getColNumByFieldName( field_name )
-            num_fields = len( self.__fields )
-            cell = self.__data[row * num_fields + pos]
+            num_fields = len( self.getHash()['fields'] )
+            cell = self.getHash()['data'][row * num_fields + pos]
         except:
             pass
         
         return cell
     
 # end Table
+
+# begin ExtendedTable(Table)
+'''
+Table with extended field definitions [{<field_name>:{<attr1>,<attr2>,...},...]
+
+Table data format:
+{"fields": [{field1:attr1}, {field2:attr2}, {ield3:attr3},...],
+"data" : [v11, v12, v13,
+v21, v22, v23]
+}
+
+Example:
+{"fields" : [{"first_name":"Person's first name"}, {"last_name":"Person's last name"}, {"DOB":"Date of birth"}],
+"data": ["Bob", "Jones", "1950/01/05",
+"Jane", "Smith", "1990/10/09"
+]
+}
+'''
+class ExtendedTable(Table):
+    def getFieldNames(self):
+        return [list(m.keys())[0] for m in Table.getFieldNames(self)]
+
+    def getFieldAttributeTable(self):
+        return Table.getFieldNames(self)
+# end ExtendedTable(Table)
