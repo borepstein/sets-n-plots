@@ -37,6 +37,8 @@ class Table(HashBased):
 
     def getFieldNames(self): return self.getHash()['fields']
 
+    def getFieldCount(self): return len( self.getHash()['fields'] )
+
     def getColNumByFieldName(self, field):
         col = None
 
@@ -66,7 +68,7 @@ class Table(HashBased):
 
         return cnt
 
-    def getColumn(self, field_name):
+    def getColumn(self, field_name, index=None):
         col = []
 
         try:
@@ -76,9 +78,9 @@ class Table(HashBased):
         except:
             return col
 
-        while pos <= len( self.getHash()['data'] ):            
-            col.append( self.getHash()['data'][pos] )
-            pos += num_fields
+        for i in range(0, self.getRowCount()):
+            if index is not None and i not in index: continue
+            col.append( self.getDataCell(field_name, i) )
 
         return col
         
@@ -93,7 +95,37 @@ class Table(HashBased):
             pass
         
         return cell
-    
+
+    def setDataCell(self, cell, field_name, row):
+        try:
+            pos = self.getColNumByFieldName( field_name )
+            num_fields = len( self.getHash()['fields'] )
+            self.getHash()['data'][row * num_fields + pos] = cell
+        except: pass
+
+    def addRow(self, row=None):
+        row_cont = row
+        
+        if row_cont is None:
+            row_cont = [None for i in range(0, len( self.getFieldNames() ) )]
+        self.getHash()['data'] += [ elem for \
+                                    elem in row_cont]
+
+    '''
+    selection_values = { field1:value1, field2:value2, ... }
+    '''
+    def getRowIndexANDSelection(self, selection_values):
+        index = []
+
+        for i in range(0, self.getRowCount()):
+            match = True
+            for k in selection_values.keys():
+                if self.getDataCell(k, i) != selection_values[k]:
+                    match = False
+                    break
+            if match: index.append(i)
+
+        return index
 # end Table
 
 # begin ExtendedTable(Table)
@@ -114,8 +146,28 @@ Example:
 }
 '''
 class ExtendedTable(Table):
+    def __init__(self, **kwargs):
+        hash = kwargs
+
+        try: hash['fields']
+        except: hash['fields'] = []
+
+        try: hash['data']
+        except: hash['data'] = []
+        
+        field_arr = []
+        elem = None
+        for f in hash['fields']:
+            elem = f
+            if type(f) is not dict:
+                elem = {f:None}
+            field_arr.append(elem)
+
+        hash['fields'] = field_arr
+        HashBased.__init__(self, **hash)
+        
     def getFieldNames(self):
-        return [list(m.keys())[0] for m in Table.getFieldNames(self)]
+        return [list(m.keys())[0] for m in self.getHash()['fields']]
 
     def getFieldAttributeTable(self):
         return Table.getFieldNames(self)

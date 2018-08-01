@@ -7,19 +7,17 @@ import matplotlib.pyplot as plt
 from hash_based import *
 
 # begin class Graphics(HashBased)
+'''
+Generic graphics data representation.
+
+Minimal structure:
+in_data=<incoming data>
+out_data=<outgoing data>
+graph_spec=<specification for graphics>
+'''
 class Graphics(HashBased):
-    '''
-    Generic graphics data representation.
-
-    Minimal structure:
-    in_data=<incoming data>
-    out_data=<outgoing data>
-    graph_spec=<specification for graphics>
-    '''
-
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        hash = self.getHash()
+        hash = kwargs
 
         try:
             temp = hash["in_data"]
@@ -36,13 +34,22 @@ class Graphics(HashBased):
         except:
             hash["graph_spec"] = None
 
-        self.setHash( **hash )
-
+        try:
+            self.__process_func = hash['process_func']
+        except:
+            self.__process_func = self.processFunc
+            
+        super().__init__(**hash)
+        
     '''
     Generating graphics.
     Implement in subclasses.
     '''
-    def process(self): pass
+    def process(self, **kwargs):
+        return self.__process_func( **kwargs )
+
+    def processFunc(self, **kwargs):
+        pass
         
 # end class Graphics(HashBased)
 
@@ -61,7 +68,7 @@ class DiscreteSetBaseGraph(Graphics):
         super().__init__(**kwargs)
 
         try:
-            self.__num_bins = self.gethash()["in_data"]["num_bins"]
+            self.__num_bins = self.getHash()["in_data"]["num_bins"]
         except: pass
     
     def process(self):
