@@ -112,7 +112,7 @@ Minimal configuration:
 NumericalSet(content={lower_limit:value, include_lower_limit:Boolean, 
 upper_limit:value, include_upper_limit:Boolean})
 
-Example: Set(content={lower_limit:12, incude_lower_limit:True, 
+Example: NumericalSet(content={lower_limit:12, incude_lower_limit:True, 
 upper_limit:25, include_upper_limit:False})
 '''
 class NumericalSet(Set):
@@ -206,7 +206,7 @@ def integral(**kwargs):
 
     for i in range(0, num_parts):
         int_sum += step * ((function(llimit + i * step) + \
-                            function(limit + (i+1) * step)) / 2)
+                            function(llimit + (i+1) * step)) / 2)
 
     return int_sum
 # end integral
@@ -218,7 +218,7 @@ def normalPDF(**kwargs):
     x = kwargs['x']
 
     return (1/math.sqrt(2 * math.pi * (stdev ** 2))) * \
-        (math.e ** -((x - mean) ** 2)/(2 * (stdev ** 2)))
+        (math.e ** (-(((x - mean) ** 2))/(2 * (stdev ** 2))))
 # end normalPDF(**kwargs)
 
 
