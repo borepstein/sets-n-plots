@@ -3,7 +3,9 @@ Generic utility routines.
 Functions such as utilities, set calculations, etc.
 '''
 
+import math
 import numpy as np
+import scipy.stats as sc_stats
 from hash_based import *
 from exceptions import *
 
@@ -107,7 +109,7 @@ class FiniteSet(Set):
 # begin NumericalSet(Set)
 '''
 Minimal configuration:
-Set(content={lower_limit:value, include_lower_limit:Boolean, 
+NumericalSet(content={lower_limit:value, include_lower_limit:Boolean, 
 upper_limit:value, include_upper_limit:Boolean})
 
 Example: Set(content={lower_limit:12, incude_lower_limit:True, 
@@ -181,7 +183,45 @@ class NumericalFiniteMultiSet(Set):
             if not self.belongsTo( e ): return False
         return True
     
-# end NumericalFiniteMultiSet(Set):
+# end NumericalFiniteMultiSet(Set)
+
+'''
+Stand-alone functions.
+'''
+
+# begin integral
+'''
+Integral over a segment for a function f(x)
+'''
+def integral(**kwargs):
+    segment = kwargs['segment']
+    function = kwargs['function']
+    num_parts = kwargs['num_parts']
+
+    llimit = segment.getContent()['lower_limit']
+    ulimit = segment.getContent()['upper_limit']
+    step = (ulimit - llimit) / num_parts
+
+    int_sum = 0
+
+    for i in range(0, num_parts):
+        int_sum += step * ((function(llimit + i * step) + \
+                            function(limit + (i+1) * step)) / 2)
+
+    return int_sum
+# end integral
+
+# begin normalPDF(**kwargs)
+def normalPDF(**kwargs):
+    mean = kwargs['mean']
+    stdev = kwargs['stdev']
+    x = kwargs['x']
+
+    return (1/math.sqrt(2 * math.pi * (stdev ** 2))) * \
+        (math.e ** -((x - mean) ** 2)/(2 * (stdev ** 2)))
+# end normalPDF(**kwargs)
+
+
 
 
 
