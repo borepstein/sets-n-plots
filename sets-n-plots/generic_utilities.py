@@ -221,8 +221,103 @@ def normalPDF(**kwargs):
         (math.e ** (-(((x - mean) ** 2))/(2 * (stdev ** 2))))
 # end normalPDF(**kwargs)
 
+# begin listIncidence(**kwargs)
+def listIncidence(**kwargs):
+    l = [float(x) for x in kwargs['input_list']]
+    sl = sorted(l)
+    ul = sorted( list( set(sl) ) )
+    l_pos = 0
+    ret_list = []
 
+    for elem in ul:
+        inc = 0
 
+        while l_pos < len(sl) and sl[l_pos] == elem:
+            inc += 1
+            l_pos += 1
+
+        ret_list.append({elem:inc})
+
+    return ret_list
+# end  listIncidence(**kwargs)
+
+# begin discreteLinearPDF(**kwargs)
+'''
+discreteLinearPDF(in_list = [el1, el2, el3, ...], 
+summary_probability = <value|0 <value <<1, x=<x value>)
+'''
+def discreteLinearPDF(**kwargs):
+    inc_l = listIncidence(input_list = kwargs['input_list'])
+    x = kwargs['x']
+    summ_prob = kwargs['summary_probability']
+
+    int_sum = 0
+    start_flag = True
+    low_end = None
+    high_end = None
+    min_point = None
+    max_point = None
+    x_match = False
+    curr_seg = None
+    x_seg_low = None
+    x_seg_high = None
+    
+    for i in inc_l:
+        if start_flag:
+            low_end = i
+            min_point = list(low_end.keys())[0]
+            start_flag = False
+            continue
+
+        high_end = i
+        int_sum += ((float(low_end[list(low_end.keys())[0]] + \
+                           high_end[list(high_end.keys())[0]]))/2) *\
+                           (list(high_end.keys())[0] - \
+                            list(low_end.keys())[0])
+
+        if not x_match:
+            curr_seg = NumericalSet(content={'lower_limit':list(low_end.keys())[0],\
+                                             'include_lower_limit':True,\
+                                             'upper_limit':list(high_end.keys())[0],
+                                             'include_upper_limit':True})
+
+            x_match = curr_seg.belongsTo(x)
+            
+            if x_match:
+                x_seg_low = low_end
+                x_seg_high = high_end
+                
+        low_end = high_end
+        max_point = list(high_end.keys())[0]
+        
+    if not x_match: return 0 
+
+    coeff = summ_prob/int_sum
+
+    point1 = [list(x_seg_low.keys())[0], \
+              coeff * x_seg_low[list(x_seg_low.keys())[0]] ]
+
+    point2 = [list(x_seg_high.keys())[0], \
+              coeff * x_seg_high[list(x_seg_high.keys())[0]] ]
+    
+    return linear(point1=point1, point2=point2, x=x)
+
+# end discreteLinearPDF(**kwargs)
+
+# begin linear(**kwargs)
+'''
+linear(point1 = [<x1>, <y1>], point2 = [<x2>, <y2>], x=<x>)
+'''
+def linear(**kwargs):
+    x1 = kwargs['point1'][0]
+    y1 = kwargs['point1'][1]
+    x2 = kwargs['point2'][0]
+    y2 = kwargs['point2'][1]
+    x = kwargs['x']
+
+    return y1 + ((x - x1)/(x2 - x1))*(y2-y1)
+    
+# end linear(**kwargs)
 
 
 
