@@ -31,16 +31,19 @@ class Operation(HashBased):
 
         try:
             self.__op_desc = kwargs["op_desc"]
-        except: pass
+        except:
+            raise InputDataFormatException(message ="Operation: Parameter \'op_desc\' is required.")
 
         try:
             self.__in_dataset = kwargs["in_dataset"]
-        except: pass
+        except:
+            raise InputDataFormatException(message ="Operation: Parameter \'in_dataset\' is required.")
 
         try:
             self.__out_dataset = kwargs["out_dataset"]
-        except: pass
-
+        except:
+            raise InputDataFormatException(message ="Operation: Parameter \'out_dataset\' is required.")
+        
         try:
             self.__process_func = hash['process_func']
         except:
@@ -82,6 +85,14 @@ out_dataset : outgoing dataset
 class BaseSingleColumnSummaryAnalysis(Operation):    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        try:
+           if type( kwargs['in_dataset'] ) is not BaseTableInDataSet:
+               raise InputDataFormatException(message="BaseSincleColumnSummaryAnalysis: \'in_dataset\' must be of type BaseTableInDataSet")
+
+           if type( kwargs['out_dataset'] ) is not BaseTableOutDataSet:
+               raise InputDataFormatException(message="BaseSincleColumnSummaryAnalysis: \'out_dataset\' must be of type BaseTableOutDataSet")
+        except:
+            raise InputDataFormatException(message="BaseSincleColumnSummaryAnalysis: format error.")
         
     def process(self):
         if self.getOpDesc()["op_type"] != "single_column_summary": return
@@ -123,6 +134,22 @@ class DiscreteDistroBaseProc(Operation):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        if type( kwargs['in_dataset'] ) is not DiscreteDistroInDataSet:
+            raise InputDataFormatExceptio(message="DiscreteDistroBaseProc: \'in_dataset\' must be of type \'DiscreteDistroInDataSet\'")
+
+        if type( kwargs['out_dataset'] ) is not DiscreteDistroInDataSet:
+            raise InputDataFormatExceptio(message="DiscreteDistroBaseProc: \'out_dataset\' must be of type \'DiscreteDistroOutDataSet\'")
+
+        try:
+            if kwargs['op_desc']['op_type'] != \
+               "disc_distro_base_analysis" or \
+               not kwargs['op_desc']['output_type'] or \
+               not kwargs['op_desc']['output_directory'] or \
+               not kwargs['op_desc']['hist_file']:
+                raise InputDataFormatExceptio(message="DiscreteDistroBaseProc: input parameter error.")
+        except:
+            raise InputDataFormatExceptio(message="DiscreteDistroBaseProc: input parameter error.")
+        
     def getOutputDir(self): return self.getHash()["op_desc"]["output_directory"]
 
     def process(self):
@@ -134,7 +161,7 @@ class DiscreteDistroBaseProc(Operation):
         output_data["stdev"] = None
         output_data["variance"] = None
         output_data["hist_file_dir"] = None
-        data_set = self.getInDataSet().getData()
+        data_set = self.getInDataSet().getDataTable()
         output_data["ssize"] = len( data_set )
 
         # Submitting blank data in a dataset as it is empty.
@@ -172,9 +199,17 @@ out_dataset : outgoing dataset
 class GroupTableByCriteria(Operation):
     def __init__(self, **kwargs):
         hash = kwargs
+        Operation.__init__(self, **hash)
         hash['process_func'] = self.processFunc
         hash['selection_fields_tag']='selection_fields'
-        Operation.__init__(self, **hash)
+        
+        if type( hash['in_dataset'] ) is not BaseTableInDataSet:
+            raise InputDataFormatException(message="GroupTableByCriteria: \'in_dataset\' must be of type \'BaseTableInDataSet\'")
+
+        if type( hash['out_dataset'] ) is not BaseTableOutDataSet:
+            raise InputDataFormatException(message="GroupTableByCriteria: \'out_dataset\' must be of type \'BaseTableOutDataSet\'")        
+                 
+        HashBased.setHash(self, **hash)
 
     def processFunc(self, **kwargs):
         def getOutTableFields(table, sel_fields):         
@@ -216,3 +251,59 @@ class GroupTableByCriteria(Operation):
         
 # begin GroupTableByCriteria(Operation)
 
+# begin FullGroupAnalysis(Operation)
+class FullGroupAnalysis(Operation):
+    def __init__(self, **kwargs):
+        self.__cat_label = "Category_"
+        Operation.__init__(self, **kwargs)
+
+        if type( kwargs['in_dataset'] ) is not DiscreteDistroInDataSet:
+            raise InputDataFormatException(message = "FullGroupAnalysis: \'in_dataset\' must be of type \'DiscreteDistroInDataSet\'")
+
+        if type( kwargs['out_dataset'] ) is not DiscreteDistroOutDataSet:
+            raise InputDataFormatException(message = "FullGroupAnalysis: \'out_dataset\' must be of type \'DiscreteDistroOutDataSet\'")
+
+    def processFunc(self, **kwargs):
+        try:
+            labels = self.getInDataSet().getHash()['dataset']['labels']
+
+            if len(labels) != len( self.getInDataSet().getData() ):
+               raise InputDataFormatException(
+                   message = \
+                   "FullGroupAnalysis: processFunc: \'dataset->data\' and \'dataset->labels\' must have the same number of members.")
+           
+        except:
+            hash = self.getInDataSet().getHash()
+            labels = []
+            i = 0
+            for elem in self.getInDataSet().getData():
+                i += 1
+                labels.append(self.__cat_label + i.__str__())
+            hash['dataset']['labels'] = labels
+            self.getInDataSet().setHash(**hash)
+            
+        
+        val_sum = 0
+
+        output_table = Table(fields = ["Label", "Value", "Percentage"], data=[] )
+        
+        for x in self.getInDataSet().getData():
+            val_sum += x
+
+        perc_flag = False
+        if val_sum != 0:
+            perc_flag = True
+
+        i = 0
+        new_row = []
+        for l in labels:
+            new_row = [l, self.getInDataSet().getData()[i], None]
+            if perc_flag: new_row[2] = \
+               ( self.getInDataSet().getData()[i] / val_sum ) * 100
+            output_table.addRow( new_row )
+            i += 1
+
+        output_data = {}
+        output_data['table'] = output_table
+        self.getOutDataSet().setDataSet( output_data )
+# end FullGroupAnalysis(Operation)

@@ -14,19 +14,21 @@ dataset_type = <dataset type>
 '''
 class DataSet(HashBased):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.__dataset = None
-        self.__dataset_type = None
+        hash = kwargs
+        super().__init__(**hash)
         
-        if kwargs is None: return
-
         try:
-            self.setDataSet( kwargs["dataset"] )
-        except: pass
+            kwargs["dataset"]
+        except:
+            raise InputDataFormatException(\
+                                           message = \
+                                           "Format error: DataSet: \'dataset\' parameter not specified")
 
+        self.setDataSet( kwargs["dataset"] )
+        
         try:
             self.setDataSetType( kwargs["dataset_type"] )
-        except: pass
+        except: raise InputDataFormatException(message = "Format error: DataSet: \'dataset_type\' parameter not specified")
         
     def setDataSet(self, ds):
         self.__dataset = ds
@@ -47,52 +49,63 @@ dataset_type = <dataset_type>
 '''
 class IncomingDataSet(DataSet):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        hash = kwargs
+
+        try:
+            if hash['dataset'] is None:
+                raise InputDataFormatException("Format error: IncomingDataSet: \'dataset\' parameter can not be \'None\'.")
+        except:
+            raise InputDataFormatException("Format error: IncomingDataSet: \'dataset\' parameter required.")
+        
+        super().__init__(**hash)
 # end class IncomingDataSet
 
 # begin class OutgoingDataSet
+'''
+Minimal structure:
+dataset=<dataset>
+dataset_type=<dataset_type>
+status_rec=<status_rec>
+'''
 class OutgoingDataSet(DataSet):
-    '''
-    Minimal structure:
-    dataset=<dataset>
-    dataset_type=<dataset_type>
-    status_rec=<status_rec>
-    '''
     
     def __init__(self, **kwargs):
-        self.__dataset_type = None
-        self.__status_rec = None
-        super().__init__(**kwargs)
+        hash = kwargs
 
-        if kwargs is None: return
+        try: hash['dataset']
+        except: hash['dataset'] = None
 
-        try:
-            self.__status_rec = kwargs["status_rec"]
-        except: pass
+        try: hash['status_rec']
+        except: hash['status_rec'] = None
+        
+        try: hash['dataset_type']
+        except:
+            raise InputDataFormatException("Format error: OutgoingDataSet: \"dataset_ype\" parameter required.")
+            
+        super().__init__(**hash)
                 
-    def getStatusRec( self ): return self.__status_rec
+    def getStatusRec( self ): return self.getHash()['status_rec']
     
 # end class OutgoingDataSet
 
 # begin class BaseTableInDataSet(IncomingDataSet)
-class BaseTableInDataSet(IncomingDataSet):
-    '''
-    Minimal configuration:
-    dataset={
-    table: <table>
-    }
-    dataset_type=<dataset_type>
-    '''
-    
+'''
+Minimal configuration:
+dataset={
+table: <table>
+}
+dataset_type=<dataset_type>
+'''
+class BaseTableInDataSet(IncomingDataSet):    
     def getDataTable(self): return self.getHash()['dataset']['table']
 # end class BaseTableInDataSet(IncomingDataSet)
 
 # begin class BaseTableOutDataSet
+'''
+Minimal structure:
+<optional> dataset={table: <table>}
+'''
 class BaseTableOutDataSet(OutgoingDataSet):
-    '''
-    Minimal structure:
-    <optional> dataset={table: <table>}
-    '''
 
     def __init__(self, **kwargs):
         hash = kwargs
@@ -110,13 +123,12 @@ class BaseTableOutDataSet(OutgoingDataSet):
 # end class BaseTableOutDataSet
 
 # begin class DiscreteDistroInDataSet(IncomingDataSet)
+'''
+Minimal structure:
+dataset = { 'data':[ val1, val2. val3, ...], }
+dataset_type = <dataset_type> }
+'''
 class DiscreteDistroInDataSet(IncomingDataSet):
-    '''
-    Minimal structure:
-    dataset = { data = [ val1, val2. val3, ...],
-    dataset_type = <dataset_type> }
-    '''
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -139,7 +151,7 @@ class DiscreteDistroOutDataSet(OutgoingDataSet):
     def setDataSet(self, ds):
         hash = self.getHash()
         hash["dataset"] = ds
-        self.setHash( hash )
+        self.setHash( **hash )
 
     def getDataSet(self): return self.getHash()["dataset"]
     

@@ -12,7 +12,7 @@ from exceptions import *
 # begin Set(HashBased)
 '''
 Minimal configuration:
-Set(content=[<elem1>, <elem2>, <elem3>, ...])
+Set(content=<content>)
 '''
 class Set(HashBased):
     def __init__(self, **kwargs):
@@ -22,7 +22,7 @@ class Set(HashBased):
         self.__is_subset_func = self.isSubsetFunc
 
         try: self.__content = kwargs['content']
-        except: pass
+        except: raise InputDataFormatException(message='Set: __init__; \'syntax\' input missing.')
 
         self.__hash['content'] = self.__content
 
@@ -74,6 +74,7 @@ Set(content=[<elem1>, <elem2>, <elem3>, ...])
 '''
 class FiniteSet(Set):
     def __init__(self, **kwargs):
+        Set.__init__(self, **kwargs)
         cont = []
         
         try: cont = kwargs['content']
@@ -88,7 +89,7 @@ class FiniteSet(Set):
         self.__hash['content'] = cont
         self.__hash['belongs_to_func'] = self.belongsToFunc
         self.__hash['is_subset_func'] = self.isSubsetFunc
-        Set.__init__(self, **self.__hash)
+        HashBased.setHash(**hash)
         
     def belongsToFunc(self, elem, **kwargs):
         try:
@@ -117,12 +118,14 @@ upper_limit:25, include_upper_limit:False})
 '''
 class NumericalSet(Set):
     def __init__(self, **kwargs):
-        self.__hash = kwargs
+        hash = kwargs
+        Set.__init__(self, **hash)
         self.__belongs_to_func = self.belongsToFunc
         self.__hash['belongs_to_func'] = self.__belongs_to_func
         self.__is_subset_func = self.isSubsetFunc
         self.__hash['is_subset_func'] = self.__is_subset_func
-        Set.__init__(self, **self.__hash)
+        HashBased.setHash(**hash)
+        
         
     def belongsToFunc(self, elem, **kwargs):
         try:
@@ -216,9 +219,9 @@ def normalPDF(**kwargs):
     mean = kwargs['mean']
     stdev = kwargs['stdev']
     x = kwargs['x']
-
-    return (1/math.sqrt(2 * math.pi * (stdev ** 2))) * \
-        (math.e ** (-(((x - mean) ** 2))/(2 * (stdev ** 2))))
+    coeff = 1/math.sqrt(2 * math.pi * (stdev ** 2))
+    exponent = -((x - mean) ** 2) / (2 * (stdev ** 2))
+    return coeff * (math.e ** exponent)
 # end normalPDF(**kwargs)
 
 # begin listIncidence(**kwargs)

@@ -3,6 +3,7 @@ Graphical utilities and tools.
 '''
 
 import os
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from hash_based import *
 

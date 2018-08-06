@@ -19,11 +19,16 @@ class SNPException(Exception, HashBased):
             msg = ''
             self.__hash['message'] = msg
             
-        Hash.__init__(self, **self.__hash)
+        HashBased.__init__(self, **self.__hash)
         Exception.__init__(self, msg)
 
     def getMessage(self): return self.getHash()['message']
 #end class SNPException(Exception)
+
+#begin InputDataFormatException(SNPException)
+class InputDataFormatException(SNPException):
+    pass
+#end InputDataFormatException(SNPException)
 
 #begin FiniteSetDuplicateValueException(SNPException)
 class FiniteSetDuplicateValueException(SNPException):
