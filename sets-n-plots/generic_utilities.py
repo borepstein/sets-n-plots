@@ -22,7 +22,7 @@ class Set(HashBased):
         self.__is_subset_func = self.isSubsetFunc
 
         try: self.__content = kwargs['content']
-        except: raise InputDataFormatException(message='Set: __init__; \'syntax\' input missing.')
+        except: raise InputDataFormatException(message='Set: __init__; \'content\' input missing.')
 
         self.__hash['content'] = self.__content
 
@@ -89,7 +89,7 @@ class FiniteSet(Set):
         self.__hash['content'] = cont
         self.__hash['belongs_to_func'] = self.belongsToFunc
         self.__hash['is_subset_func'] = self.isSubsetFunc
-        HashBased.setHash(**hash)
+        HashBased.setHash(self, **self.__hash)
         
     def belongsToFunc(self, elem, **kwargs):
         try:
@@ -121,10 +121,10 @@ class NumericalSet(Set):
         hash = kwargs
         Set.__init__(self, **hash)
         self.__belongs_to_func = self.belongsToFunc
-        self.__hash['belongs_to_func'] = self.__belongs_to_func
+        hash['belongs_to_func'] = self.__belongs_to_func
         self.__is_subset_func = self.isSubsetFunc
-        self.__hash['is_subset_func'] = self.__is_subset_func
-        HashBased.setHash(**hash)
+        hash['is_subset_func'] = self.__is_subset_func
+        HashBased.setHash(self, **hash)
         
         
     def belongsToFunc(self, elem, **kwargs):
@@ -244,68 +244,76 @@ def listIncidence(**kwargs):
     return ret_list
 # end  listIncidence(**kwargs)
 
-# begin discreteLinearPDF(**kwargs)
+# begin discreteStepPDF(**kwargs)
 '''
-discreteLinearPDF(in_list = [el1, el2, el3, ...], 
+discreteStepPDF(in_list = [el1, el2, el3, ...],
+num_parts = <num_parts>,
+clearance = <clearance>,
 summary_probability = <value|0 <value <<1, x=<x value>)
+
 '''
-def discreteLinearPDF(**kwargs):
+def discreteStepPDF(**kwargs):
     inc_l = listIncidence(input_list = kwargs['input_list'])
+    d_list = kwargs['input_list']
     x = kwargs['x']
     summ_prob = kwargs['summary_probability']
+    num_parts = kwargs['num_parts']
+    clearance = kwargs['clearance']
+    s_list = sorted( d_list )
+    min_val = s_list[0]
+    max_val = s_list[len(s_list) - 1]
+    start_pt = min_val - clearance
+    end_pt = max_val + clearance
 
-    int_sum = 0
-    start_flag = True
-    low_end = None
-    high_end = None
-    min_point = None
-    max_point = None
-    x_match = False
+    if x < start_pt or x > end_pt : return 0
+    
+    step = (end_pt - start_pt)/num_parts
+    lower_limit = None
+    upper_limit = None
+    sl_index = 0
+    rank_arr = [0 for i in range(0, num_parts)]
     curr_seg = None
-    x_seg_low = None
-    x_seg_high = None
+    include_lower_limit = True
+    include_upper_limit = False
+    lower_limit = None
+    upper_limit = None
+    init_area = 0
     
-    for i in inc_l:
-        if start_flag:
-            low_end = i
-            min_point = list(low_end.keys())[0]
-            start_flag = False
-            continue
+    for i in range(0, num_parts):
+        seg_rank = 0
+        lower_limit = start_pt + step*i
+        upper_limit = start_pt + step*(i+1)
 
-        high_end = i
-        int_sum += ((float(low_end[list(low_end.keys())[0]] + \
-                           high_end[list(high_end.keys())[0]]))/2) *\
-                           (list(high_end.keys())[0] - \
-                            list(low_end.keys())[0])
-
-        if not x_match:
-            curr_seg = NumericalSet(content={'lower_limit':list(low_end.keys())[0],\
-                                             'include_lower_limit':True,\
-                                             'upper_limit':list(high_end.keys())[0],
-                                             'include_upper_limit':True})
-
-            x_match = curr_seg.belongsTo(x)
-            
-            if x_match:
-                x_seg_low = low_end
-                x_seg_high = high_end
-                
-        low_end = high_end
-        max_point = list(high_end.keys())[0]
+        if sl_index == len(s_list): break
         
-    if not x_match: return 0 
+        if s_list[sl_index] >= upper_limit and \
+           not (s_list[sl_index] == upper_limit and \
+                (i == num_parts - 1)):
+            continue
+        
+        while sl_index < len(s_list) and \
+              s_list[sl_index] < lower_limit:
+            sl_index += 1
 
-    coeff = summ_prob/int_sum
+        while sl_index < len(s_list) and \
+              s_list[sl_index] >= lower_limit and \
+              ( s_list[sl_index] < upper_limit or \
+                (i == num_parts - 1 and
+                 s_list[sl_index] == upper_limit) ):
+            sl_index += 1
+            seg_rank += 1
+            init_area += step
 
-    point1 = [list(x_seg_low.keys())[0], \
-              coeff * x_seg_low[list(x_seg_low.keys())[0]] ]
-
-    point2 = [list(x_seg_high.keys())[0], \
-              coeff * x_seg_high[list(x_seg_high.keys())[0]] ]
-    
-    return linear(point1=point1, point2=point2, x=x)
-
-# end discreteLinearPDF(**kwargs)
+        rank_arr[i] = seg_rank
+        
+    try:
+        coeff = summ_prob/init_area
+    except:
+        return 0
+        
+    seg_index = int((x - start_pt) // step)
+    return coeff * rank_arr[seg_index]
+# end discreteStepPDF(**kwargs)
 
 # begin linear(**kwargs)
 '''
