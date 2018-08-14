@@ -3,7 +3,7 @@ Collection of Exception() subclasses for the use in sets-n-graphs
 '''
 
 import sys
-from hash_based import *
+from .hash_based import *
 
 # begin class SNPException(Exception)
 '''

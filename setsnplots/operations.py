@@ -4,12 +4,12 @@ Operations-related classes.
 
 import copy
 import numpy as np
-from hash_based import *
-from generic_utilities import *
-from table import *
-from dataset import *
-from graphical_utils import *
-from exceptions import *
+from .hash_based import *
+from .generic_utilities import *
+from .table import *
+from .dataset import *
+from .graphical_utils import *
+from .exceptions import *
 
 # begin class Operation()
 '''

@@ -6,8 +6,8 @@ Functions such as utilities, set calculations, etc.
 import math
 import numpy as np
 import scipy.stats as sc_stats
-from hash_based import *
-from exceptions import *
+from .hash_based import *
+from .exceptions import *
 
 # begin Set(HashBased)
 '''

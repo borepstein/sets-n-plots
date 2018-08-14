@@ -1,3 +1,0 @@
-"""
-Module entities init script.
-"""

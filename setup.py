@@ -8,7 +8,7 @@ readme = open('README.rst').read()
 license = open('LICENSE').read()
 
 setup(
-    name='sets_n_plots',
+    name='setsnplots',
     version='0.1.0',
     description='Statistical analysis and graph generating package',
     long_description=readme,

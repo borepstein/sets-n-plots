@@ -2,9 +2,9 @@
 Class collection for data set (incoming and outgoing)
 """
 
-from hash_based import *
-from table import *
-from exceptions import *
+from .hash_based import *
+from .table import *
+from .exceptions import *
 
 # begin class DataSet
 '''

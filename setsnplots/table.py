@@ -2,8 +2,8 @@
 Variable length table handling logic.
 """
 
-from hash_based import *
-from generic_utilities import *
+from .hash_based import *
+from .generic_utilities import *
 
 # begin Table
 '''
