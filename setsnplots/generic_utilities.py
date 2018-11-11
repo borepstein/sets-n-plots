@@ -3,9 +3,11 @@ Generic utility routines.
 Functions such as utilities, set calculations, etc.
 '''
 
+import os
 import math
 import numpy as np
 import scipy.stats as sc_stats
+import multiprocessing
 from .hash_based import *
 from .exceptions import *
 
@@ -330,5 +332,61 @@ def linear(**kwargs):
     
 # end linear(**kwargs)
 
+'''Multiprocessing functions
+'''
 
+def runFunctionFromArgList(args):
+    args_l = list(args)
+    if len(args_l) == 0: return None
+    f_to_run = args_l[0]
+    del args_l[0]
+    return f_to_run( *(tuple(args_l)) )
 
+def runInMultiProc(**kwargs):
+    
+    if 'pool_size' in kwargs.keys():
+        pool_size = kwargs['pool_size']
+    else:
+        pool_size = os.sysconf( os.sysconf_names['SC_NPROCESSORS_ONLN'] )
+
+    if 'scan_size' in kwargs.keys():
+        scan_size = kwargs['scan_size']
+    else:
+        scan_size = 2 * pool_size
+
+    if 'data_feed' not in kwargs.keys():
+        raise InputDataFormatException(message="runMultiProc: parameter data_feed required.")
+            
+    data_feed = kwargs['data_feed']
+
+    if 'target' not in kwargs.keys():
+        raise InputDataFormatException(message="runMultiProc: parameter target required.")
+
+    target = kwargs['target']
+    func_to_run = None
+    pool = multiprocessing.Pool(processes=pool_size)
+    scan_arr = []
+    res_arr = []
+    curr_elem = None
+    
+    for elem in data_feed:
+        func_to_run = target
+        curr_elem = elem
+
+        if type(curr_elem) is tuple:
+            func_to_run = runFunctionFromArgList
+            curr_elem = tuple([target] + list(curr_elem))
+            
+        scan_arr.append(curr_elem)
+
+        if len(scan_arr) == scan_size:
+            res_arr = pool.map(func_to_run, scan_arr)
+            scan_arr = []
+            for res in res_arr: yield( res )
+
+    if len(scan_arr) > 0:
+        res_arr = pool.map(func_to_run, scan_arr)
+        for res in res_arr: yield( res )
+
+    pool.close()
+    pool.join()
